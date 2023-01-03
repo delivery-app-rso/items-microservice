@@ -7,8 +7,13 @@ import javax.persistence.TypedQuery;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.UriInfo;
 
+import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
+import org.eclipse.microprofile.faulttolerance.Fallback;
+import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.metrics.annotation.Timed;
 
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -28,18 +33,52 @@ public class ItemBean {
     @Inject
     private EntityManager em;
 
-    public List<Item> getItem() {
-
+    @Timeout(value = 2, unit = ChronoUnit.SECONDS)
+    @CircuitBreaker(requestVolumeThreshold = 3)
+    @Fallback(fallbackMethod = "getItemFallback")
+    public List<Item> getItems() {
         TypedQuery<ItemEntity> query = em.createNamedQuery(
                 "ItemEntity.getAll", ItemEntity.class);
 
         List<ItemEntity> resultList = query.getResultList();
 
         return resultList.stream().map(ItemConverter::toDto).collect(Collectors.toList());
+    }
 
+    @Timeout(value = 2, unit = ChronoUnit.SECONDS)
+    @CircuitBreaker(requestVolumeThreshold = 3)
+    @Fallback(fallbackMethod = "getItemFallback")
+    public List<Item> getItemsFallbackTest() {
+        try {
+            wait(4000);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return new ArrayList<>();
+    }
+
+    public List<Item> getItemFallback() {
+        return new ArrayList<Item>() {
+            {
+                add(new Item("Fallback working", "Fallback working"));
+            }
+        };
+    }
+
+    public List<Item> getItemFallback(UriInfo uriInfo) {
+        return new ArrayList<Item>() {
+            {
+                add(new Item("Fallback working", "Fallback working"));
+            }
+        };
     }
 
     @Timed
+    @Timeout(value = 2, unit = ChronoUnit.SECONDS)
+    @CircuitBreaker(requestVolumeThreshold = 3)
+    @Fallback(fallbackMethod = "getItemFallback")
     public List<Item> getItemFilter(UriInfo uriInfo) {
 
         QueryParameters queryParameters = QueryParameters.query(uriInfo.getRequestUri().getQuery()).defaultOffset(0)

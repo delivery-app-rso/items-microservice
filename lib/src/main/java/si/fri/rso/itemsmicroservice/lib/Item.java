@@ -9,6 +9,14 @@ public class Item {
     private String description;
     private String image;
 
+    public Item(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
+
+    public Item() {
+    }
+
     public Integer getId() {
         return id;
     }

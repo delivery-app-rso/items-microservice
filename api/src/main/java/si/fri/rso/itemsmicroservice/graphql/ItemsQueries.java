@@ -28,11 +28,16 @@ public class ItemsQueries {
             @GraphQLArgument(name = "sort") Sort sort,
             @GraphQLArgument(name = "filter") Filter filter) {
 
-        return GraphQLUtils.process(itemBean.getItem(), pagination, sort, filter);
+        return GraphQLUtils.process(itemBean.getItems(), pagination, sort, filter);
     }
 
     @GraphQLQuery
     public Item getItem(@GraphQLArgument(name = "itemId") Integer itemId) {
         return itemBean.getItem(itemId);
+    }
+
+    @GraphQLQuery
+    public List<Item> getFallbackTest() {
+        return itemBean.getItemsFallbackTest();
     }
 }
